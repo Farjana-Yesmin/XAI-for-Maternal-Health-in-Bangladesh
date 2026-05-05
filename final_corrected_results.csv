@@ -1,0 +1,15 @@
+Metric,Value
+Accuracy,0.8866995073891626
+Precision,0.8901467454475009
+Recall,0.8866995073891626
+F1_Score,0.8869020838132569
+ROC_AUC,0.9703051683149586
+Best_Baseline_Accuracy,0.8620689655172413
+Improvement_Percentage,2.4630541871921263
+CV_Mean_Accuracy,0.8643490115882754
+CV_Std,0.016215390649012982
+Fuzzy_Correlation,0.2978329864722709
+Regional_Fairness_Std,0.07659279968956424
+Top_Feature_1,Healthcare_Access_Score
+Top_Feature_2,BS
+Top_Feature_3,FuzzyRiskScore
