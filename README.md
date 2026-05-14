@@ -1,103 +1,174 @@
-# XAI for Maternal Health Risk Prediction in Bangladesh
+# Explainable AI for Maternal Health Risk Prediction in Bangladesh
 
-[![Python 3.8+](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
-[![Paper Status](https://img.shields.io/badge/Paper-Under%20Review-orange)](LINK_TO_PREPRINT_IF_ANY)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![ICAIHE 2026](https://img.shields.io/badge/ICAIHE-2026%20Waseda-orange.svg)](https://www.researchsquare.com/article/rs-8584734/v1)
 
-**Repository for the paper:** *"Explainable AI for Maternal Health Risk Prediction in Bangladesh: A Hybrid Fuzzy-XGBoost Framework with Clinician Validation"*
+Official implementation of:
 
-> **A hybrid AI framework designed to provide transparent risk predictions for maternal health in resource-constrained settings, combining interpretable fuzzy logic with powerful machine learning.**
+> Yesmin, F., Shirmin, N. & Bristy, S.S. (2026).
+> *Explainable AI for Maternal Health Risk Prediction in Bangladesh:
+> A Hybrid Fuzzy-XGBoost Framework with Clinician Validation.*
+> Accepted, ICAIHE 2026, Waseda University, Tokyo.
+> Preprint: [ResearchSquare rs-8584734/v1](https://www.researchsquare.com/article/rs-8584734/v1)
 
-## 📋 Overview
+Part of the [FairHealth](https://github.com/Farjana-Yesmin/fairhealth) library —
+`pip install fairhealth`
 
-This repository contains the implementation for a research project addressing a critical challenge in global health: **making AI-assisted maternal health risk assessment trustworthy and actionable for clinicians in Bangladesh**.
+---
 
-In many low-resource settings, complex "black-box" AI models are met with skepticism. Our work bridges this gap by developing a **novel hybrid framework** that integrates an interpretable, rule-based Fuzzy Inference System (reflecting clinical guidelines) with a high-performance XGBoost classifier. This approach aims to deliver both strong predictive performance and clear, intuitive explanations for its predictions, facilitating potential clinical adoption.
+## The Problem
 
-## 🏗️ Methodology at a Glance
+Bangladesh reports a maternal mortality ratio of 156 per 100,000 live births.
+Black-box ML models limit clinical adoption in resource-constrained settings
+because clinicians cannot understand or trust their reasoning.
 
-The core innovation is a two-stage model:
-1.  **Ante-hoc Interpretability**: A fuzzy logic system translates clinical parameters (like blood pressure and age) into a human-readable "fuzzy risk score" based on established medical knowledge.
-2.  **Hybrid Prediction**: This fuzzy score, along with the original clinical features and contextual data, is used to train an XGBoost model. For final predictions, we employ **post-hoc explanation tools** (SHAP, LIME) to provide detailed, case-specific reasoning.
+**This work:** A hybrid Fuzzy-XGBoost framework combining ante-hoc fuzzy logic
+with post-hoc SHAP/LIME explanations, validated by 14 healthcare professionals.
 
-**Key Features of the Framework:**
-*   **Explainability-by-Design**: Combines intuitive rules with model-agnostic explanations.
-*   **Context-Awareness**: Incorporates regional healthcare access data to address disparities.
-*   **Clinician-Centered**: Designed and validated with feedback from healthcare professionals in Bangladesh.
+---
 
-## 📁 Repository Structure
+## Results
 
+### Model Performance (test set, n=203)
 
-## 📁 Repository Structure
-.
-├── maternal_health.py # Main Python module with model implementation
-├── requirements.txt # Python dependencies
-├── data/ # Data processing utilities
-├── notebooks/ # Jupyter notebooks for EDA and prototyping
-└── README.md # This file
+| Metric | Value |
+|---|---|
+| Accuracy | **88.67%** |
+| Precision | 0.8901 |
+| Recall | 0.8867 |
+| F1-Score | 0.8869 |
+| ROC-AUC | **0.9703** |
 
-## 🚀 Getting Started
+Cross-validation: 0.8643 ± 0.0162 (robust, consistent with test performance).
 
-### Prerequisites
-*   Python 3.8+
-*   pip
+### Comparison With Baselines
 
-### Installation
+| Model | Accuracy | F1 |
+|---|---|---|
+| **Hybrid Fuzzy-XGBoost (ours)** | **88.67%** | **0.8869** |
+| Gradient Boosting | 86.21% | 0.8619 |
+| Random Forest | 85.22% | 0.8521 |
+| Decision Tree | 81.28% | 0.8089 |
+| MLP Neural Network | 79.80% | 0.7938 |
+| SVM | 75.86% | 0.7572 |
+| K-Nearest Neighbors | 72.91% | 0.7289 |
 
-1.  Clone the repository:
-    ```bash
-    git clone https://github.com/Farjana-Yesmin/XAI-for-Maternal-Health-in-Bangladesh.git
-    cd XAI-for-Maternal-Health-in-Bangladesh
-    ```
+### SHAP Feature Importance
 
-2.  Install required packages:
-    ```bash
-    pip install -r requirements.txt
-    ```
+| Feature | SHAP Value |
+|---|---|
+| Healthcare Access Score | 1.49 (top predictor) |
+| Blood Sugar | 0.53 |
+| Fuzzy Risk Score | 0.39 |
+| Systolic Blood Pressure | 0.29 |
 
-### Basic Usage
+Healthcare access (from DGHS 2024) dominates — maternal outcomes are shaped
+by both biological risk and care infrastructure.
 
-The main module `maternal_health.py` provides a class to train and use the hybrid model.
+### Clinician Validation (N=14)
+
+| Explanation Type | Preference |
+|---|---|
+| **Hybrid Fuzzy+SHAP (ours)** | **71.4%** |
+| SHAP only | 21.4% |
+| Score only | 7.1% |
+
+54.8% would trust the system in clinical practice.
+Top barrier: internet connectivity (50% of respondents).
+
+### Fairness Analysis (8 Bangladesh Divisions)
+
+- Accuracy σ = 0.0766 (low variation across regions)
+- Better performance in underserved areas (r = -0.876 with healthcare access)
+- Perfect accuracy (100%) in Sylhet, Rangpur, Barisal, Mymensingh
+
+---
+
+## Hybrid Architecture
+Stage 1 — Ante-hoc (Fuzzy Logic)
+Clinical parameters (Age, BP, Blood Sugar, HR)
+↓
+12 fuzzy rules from WHO 2016, ADA 2023, ACC/AHA 2017
+↓
+Fuzzy Risk Score (centroid defuzzification)
+Stage 2 — ML (XGBoost)
+6 clinical features + Healthcare Access Score + Fuzzy Risk Score
+↓
+XGBoost (400 estimators, max_depth=5, lr=0.05, L1/L2 regularization)
+↓
+Risk Level: Low / Medium / High
+Stage 3 — Post-hoc Explanations
+SHAP TreeExplainer → global feature importance
+LIME → local instance-level explanation
+**Sample fuzzy rules:**
+IF Age=Optimal AND BP=Normal AND BS=Normal → Risk=Low
+IF Age=High-risk OR BP=Stage2              → Risk=High
+IF BS=Diabetic AND BP=Elevated             → Risk=High
+
+---
+
+## Data Sources
+
+| Source | What It Provides |
+|---|---|
+| UCI Maternal Health Risk Dataset | 1,014 patient records (base clinical data) |
+| DGHS Dashboard 2024 | Healthcare access scores, ANC rates by division |
+| UNFPA MPDSR 2023 | Maternal mortality ratios by division |
+| WHO 2016, ADA 2023, ACC/AHA 2017 | Clinical fuzzy rule thresholds |
+
+Dataset on HuggingFace:
+[fairhealth/bangladesh-maternal-health](https://huggingface.co/datasets/fairhealth/bangladesh-maternal-health)
+
+---
+
+## Quick Start
+
+```bash
+pip install xgboost shap lime scikit-fuzzy scikit-learn pandas numpy matplotlib
+```
 
 ```python
-import maternal_health as mh
-import pandas as pd
+# Run maternal_health.py
+# Or use via FairHealth:
+from fairhealth.explain.fuzzy import get_fired_rules
 
-# Load your data
-# data = pd.read_csv('path_to_your_data.csv')
+rules = get_fired_rules(age=42, sbp=145, bs=12.0, hr=88)
+for r in rules:
+    print(f"Rule {r['id']}: {r['condition']} → {r['outcome']}")
+```
 
-# Initialize and train the model
-# hybrid_model = mh.HybridFuzzyXGBoost()
-# hybrid_model.train(training_data)
+---
 
-# Get a prediction with an explanation for a new case
-# prediction, explanation = hybrid_model.predict_explain(new_patient_data)
+## Files in This Repository
 
+| File | Description |
+|---|---|
+| `maternal_health.py` | Complete implementation |
+| `final_fuzzy_xgboost_model.json` | Trained model weights |
+| `final_corrected_results.csv` | Final evaluation results |
+| `model_comparison_results.csv` | All 7 models compared |
+| `results_summary.csv` | Summary statistics |
 
-or detailed examples on data preparation and advanced usage, please refer to the example notebooks in the notebooks/ directory.
+Clinician survey data available on request.
 
-📄 Associated Publication
+---
 
-The methodology and findings of this project are detailed in a companion paper:
+## Citation
 
-Farjana Yesmin, Suriya Shabnam Bristy. "Explainable AI for Maternal Health Risk Prediction in Bangladesh: A Hybrid Fuzzy-XGBoost Framework with Clinician Validation."
-Currently under review.
-A preprint will be made available upon submission. Please cite this paper if you use the code or ideas from this repository.
+```bibtex
+@inproceedings{yesmin2026icaihe,
+  author    = {Yesmin, Farjana and Shirmin, Nusrat and Bristy, Suraiya Shabnam},
+  title     = {Explainable AI for Maternal Health Risk Prediction in Bangladesh:
+               A Hybrid Fuzzy-XGBoost Framework with Clinician Validation},
+  booktitle = {ICAIHE 2026, Waseda University, Tokyo},
+  year      = {2026},
+  note      = {Preprint: https://www.researchsquare.com/article/rs-8584734/v1}
+}
+```
 
-🤝 Contributing & Issues
+---
 
-We welcome questions and discussions about the code! Please use the GitHub Issues page for:
-
-Reporting bugs in the implementation.
-Asking clarifying questions about the code.
-Suggesting minor improvements.
-Please note that as the associated paper is under review, detailed discussions of the methodology and results should be directed to the authors privately.
-
-📜 License
-
-This project's code is released under the MIT License.
-
-🙏 Acknowledgments
-
-We extend our sincere gratitude to the healthcare professionals in Bangladesh who provided valuable feedback during the development of this framework. This work also acknowledges the use of publicly available health data from the Bangladesh Directorate General of Health Services (DGHS).
-
+**Authors:** Farjana Yesmin · Nusrat Shirmin · Suraiya Shabnam Bristy (Medical Officer,
+Sonargaon Sheba General Hospital, Narayanganj)
+· MIT License
